@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "baseUrl": ".",
+    "strict": false,
+    "jsx": "preserve",
+    "target": "ES6",
+    "module": "ESNext",
+    "moduleResolution": "Node"
+  },
+  "include": ["./"]
+}
