@@ -1,11 +1,13 @@
-import { createClient } from "@libsql/client";
+import { createClient } from "libsql/client";
 
 export const db = createClient({
   url: process.env.TURSO_DB_URL!,
   authToken: process.env.TURSO_DB_AUTH_TOKEN!,
 });
 
-// Cria tabela se não existir
+// NÃO rode nada automaticamente aqui
+// Esse arquivo deve ficar “puro”
+
 export async function initDB() {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS oficios (
@@ -20,13 +22,6 @@ export async function initDB() {
   `);
 }
 
-// Garante execução da criação da tabela
-initDB();
-
-/*
- * Criar Ofício
- * Reinicia a numeração a cada ano
-*/
 export async function criarOficio(data: {
   ano: number;
   processo: string;
@@ -34,23 +29,21 @@ export async function criarOficio(data: {
   assunto: string;
   observacoes: string;
 }) {
-  // Busca o último número utilizado no ano
   const result = await db.execute({
     sql: "SELECT numero FROM oficios WHERE ano = ? ORDER BY numero DESC LIMIT 1",
     args: [data.ano],
   });
 
-  const lastNumber = result.rows.length > 0 ? Number(result.rows[0].numero) : 0;
-  const nextNumber = lastNumber + 1;
+  const last = result.rows.length > 0 ? Number(result.rows[0].numero) : 0;
+  const next = last + 1;
 
-  // Inserção
   await db.execute({
     sql: `
       INSERT INTO oficios (numero, ano, processo, interessado, assunto, observacoes)
       VALUES (?, ?, ?, ?, ?, ?)
     `,
     args: [
-      nextNumber,
+      next,
       data.ano,
       data.processo,
       data.interessado,
@@ -59,13 +52,12 @@ export async function criarOficio(data: {
     ],
   });
 
-  return nextNumber;
+  return next;
 }
 
-/*
- * Listar todos os ofícios
-*/
 export async function listarOficios() {
-  const result = await db.execute("SELECT * FROM oficios ORDER BY ano DESC, numero DESC");
+  const result = await db.execute(
+    "SELECT * FROM oficios ORDER BY ano DESC, numero DESC"
+  );
   return result.rows;
 }
