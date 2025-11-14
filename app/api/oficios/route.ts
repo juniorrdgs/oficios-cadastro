@@ -1,23 +1,25 @@
-import { db } from "../../../lib/db";
 import { NextResponse } from "next/server";
+import { criarOficio, listarOficios } from "@/lib/db";
 
 export async function GET() {
-  const result = await db.execute("SELECT * FROM oficios ORDER BY id DESC");
-  return NextResponse.json(result.rows);
+  const dados = listarOficios();
+  return NextResponse.json(dados);
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  try {
+    const body = await req.json();
 
-  const { numero_processo, interessado, assunto, observacoes } = body;
+    const novoNumero = criarOficio({
+      ano: body.ano,
+      processo: body.processo,
+      interessado: body.interessado,
+      assunto: body.assunto,
+      observacoes: body.observacoes,
+    });
 
-  await db.execute({
-    sql: `
-      INSERT INTO oficios (numero_processo, interessado, assunto, observacoes)
-      VALUES (?, ?, ?, ?)
-    `,
-    args: [numero_processo, interessado, assunto, observacoes],
-  });
-
-  return NextResponse.json({ message: "Ofício registrado com sucesso" });
+    return NextResponse.json({ sucesso: true, numero: novoNumero });
+  } catch (e) {
+    return NextResponse.json({ erro: "Erro ao criar ofício" }, { status: 500 });
+  }
 }
