@@ -1,83 +1,83 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function Home() {
-  const [oficios, setOficios] = useState([]);
+  const currentYear = new Date().getFullYear();
+  const [ano, setAno] = useState(currentYear);
   const [form, setForm] = useState({
-    numero_processo: "",
+    processo: "",
     interessado: "",
     assunto: "",
-    observacoes: "",
+    observacoes: ""
   });
 
-  const load = async () => {
-    const res = await fetch("/api/oficios");
-    setOficios(await res.json());
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await fetch("/api/oficios", {
+  async function enviar() {
+    const resp = await fetch("/api/oficios", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ano, ...form }),
     });
 
-    setForm({
-      numero_processo: "",
-      interessado: "",
-      assunto: "",
-      observacoes: "",
-    });
-
-    load();
-  };
+    const data = await resp.json();
+    if (data.sucesso) {
+      alert(`Ofício nº ${data.numero}/${ano} cadastrado!`);
+    } else {
+      alert("Erro ao cadastrar");
+    }
+  }
 
   return (
-    <div style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
-      <h1>Sistema de Controle de Ofícios</h1>
+    <div className="bg-white shadow-lg rounded-xl p-8">
+      <h1 className="text-3xl font-bold mb-6">Cadastro de Ofícios</h1>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Número do processo"
-          value={form.numero_processo}
-          onChange={(e) => setForm({ ...form, numero_processo: e.target.value })}
+      <div className="mb-6">
+        <p className="font-semibold mb-2">Selecione o ano:</p>
+
+        <div className="flex gap-4">
+          {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
+            <label key={y} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="ano"
+                value={y}
+                checked={ano === y}
+                onChange={() => setAno(y)}
+              />
+              {y}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        <input className="input" placeholder="Número do processo"
+          value={form.processo}
+          onChange={(e) => setForm({ ...form, processo: e.target.value })}
         />
-        <input
-          placeholder="Interessado"
+
+        <input className="input" placeholder="Interessado"
           value={form.interessado}
           onChange={(e) => setForm({ ...form, interessado: e.target.value })}
         />
-        <input
-          placeholder="Assunto"
+
+        <input className="input" placeholder="Assunto"
           value={form.assunto}
           onChange={(e) => setForm({ ...form, assunto: e.target.value })}
         />
-        <textarea
-          placeholder="Observações"
+
+        <textarea className="input h-24" placeholder="Observações"
           value={form.observacoes}
           onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
         />
+      </div>
 
-        <button type="submit">Registrar Ofício</button>
-      </form>
-
-      <h2>Ofícios Registrados</h2>
-
-      {oficios.map((o) => (
-        <div key={o.id} style={{ padding: 10, marginBottom: 10, border: "1px solid #ccc" }}>
-          <strong>Ofício nº {o.id}</strong>
-          <p><b>Processo:</b> {o.numero_processo}</p>
-          <p><b>Interessado:</b> {o.interessado}</p>
-          <p><b>Assunto:</b> {o.assunto}</p>
-          <p><b>Observações:</b> {o.observacoes}</p>
-        </div>
-      ))}
+      <button
+        onClick={enviar}
+        className="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+      >
+        Cadastrar
+      </button>
     </div>
   );
 }
